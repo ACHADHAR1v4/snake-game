@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Car Racing Game - Color Levels</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      color: white;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 400px;
+      height: 600px;
+      background: #333;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 5px solid white;
+      transition: background 0.5s ease;
+    }
+
+    .roadLine {
+      position: absolute;
+      width: 10px;
+      height: 100px;
+      background: white;
+      left: 195px;
+    }
+
+    .car {
+      position: absolute;
+      width: 50px;
+      height: 90px;
+      bottom: 20px;
+      left: 175px;
+      border-radius: 10px;
+      transition: background 0.5s ease;
+    }
+
+    .enemy {
+      position: absolute;
+      width: 50px;
+      height: 90px;
+      border-radius: 10px;
+      transition: background 0.5s ease;
+    }
+
+    #info {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Car Racing Game</h1>
+<div id="gameArea"></div>
+<div id="info">
+  Score: <span id="score">0</span> |
+  Level: <span id="level">1</span> |
+  Lives: <span id="lives">3</span>
+</div>
+<button onclick="startGame()">Start Game</button>
+
+<script>
+const gameArea = document.getElementById("gameArea");
+const scoreEl = document.getElementById("score");
+const levelEl = document.getElementById("level");
+const livesEl = document.getElementById("lives");
+
+let player = { speed: 5, score: 0, level: 1, lives: 3 };
+let keys = {};
+let car;
+
+const colors = ["red","blue","green","purple","orange","cyan","pink","yellow"];
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function randomColor() {
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function startGame() {
+  gameArea.innerHTML = "";
+  player = { speed: 5, score: 0, level: 1, lives: 3 };
+  scoreEl.innerText = 0;
+  levelEl.innerText = 1;
+  livesEl.innerText = 3;
+  gameArea.style.background = "#333";
+
+  // Road lines
+  for (let i = 0; i < 5; i++) {
+    let line = document.createElement("div");
+    line.classList.add("roadLine");
+    line.style.top = (i * 150) + "px";
+    gameArea.appendChild(line);
+  }
+
+  // Player car
+  car = document.createElement("div");
+  car.classList.add("car");
+  car.style.background = "red";
+  gameArea.appendChild(car);
+
+  // Enemies
+  for (let i = 0; i < 3; i++) {
+    let enemy = document.createElement("div");
+    enemy.classList.add("enemy");
+    enemy.style.top = (i * -200) + "px";
+    enemy.style.left = Math.floor(Math.random() * 350) + "px";
+    enemy.style.background = randomColor();
+    gameArea.appendChild(enemy);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function gameLoop() {
+  moveLines();
+  moveEnemies();
+  moveCar();
+
+  player.score++;
+  scoreEl.innerText = player.score;
+
+  // Level increase every 500 score
+  if (player.score % 500 === 0) {
+    player.level++;
+    player.speed++;
+    levelEl.innerText = player.level;
+
+    // Change colors on level up
+    car.style.background = randomColor();
+    gameArea.style.background = randomColor();
+
+    document.querySelectorAll(".enemy").forEach(enemy => {
+      enemy.style.background = randomColor();
+    });
+  }
+
+  if (player.lives > 0) {
+    requestAnimationFrame(gameLoop);
+  } else {
+    alert("Game Over! Final Score: " + player.score);
+  }
+}
+
+function moveLines() {
+  document.querySelectorAll(".roadLine").forEach(line => {
+    let top = parseInt(line.style.top);
+    top += player.speed;
+    if (top > 600) top = -100;
+    line.style.top = top + "px";
+  });
+}
+
+function moveEnemies() {
+  document.querySelectorAll(".enemy").forEach(enemy => {
+    let top = parseInt(enemy.style.top);
+    top += player.speed;
+
+    if (isCollide(car, enemy)) {
+      player.lives--;
+      livesEl.innerText = player.lives;
+      enemy.style.top = "-200px";
+      enemy.style.left = Math.floor(Math.random() * 350) + "px";
+      enemy.style.background = randomColor();
+    }
+
+    if (top > 600) {
+      top = -200;
+      enemy.style.left = Math.floor(Math.random() * 350) + "px";
+      enemy.style.background = randomColor();
+    }
+
+    enemy.style.top = top + "px";
+  });
+}
+
+function moveCar() {
+  let left = car.offsetLeft;
+
+  if (keys["ArrowLeft"] && left > 0)
+    car.style.left = (left - 5) + "px";
+
+  if (keys["ArrowRight"] && left < 350)
+    car.style.left = (left + 5) + "px";
+}
+
+function isCollide(a, b) {
+  let aRect = a.getBoundingClientRect();
+  let bRect = b.getBoundingClientRect();
+
+  return !(
+    aRect.bottom < bRect.top ||
+    aRect.top > bRect.bottom ||
+    aRect.right < bRect.left ||
+    aRect.left > bRect.right
+  );
+}
+</script>
+
+</body>
+</html>
